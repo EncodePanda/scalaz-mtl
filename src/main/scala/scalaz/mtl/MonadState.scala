@@ -17,7 +17,7 @@ trait MonadState[F[_], S] extends Serializable {
 
 trait DefaultMonadState[F[_], S] extends MonadState[F, S] {
   def inspect[A](f: S => A): F[A] = monad.map(get)(f)
-  def modify(f: S => S): F[Unit] = monad.flatMap(inspect(f))(set)
+  def modify(f: S => S): F[Unit] = monad.bind(inspect(f))(set)
 }
 
 object MonadState {
