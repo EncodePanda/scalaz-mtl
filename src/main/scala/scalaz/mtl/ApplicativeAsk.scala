@@ -15,7 +15,14 @@ trait DefaultApplicativeAsk[F[_], E] extends ApplicativeAsk[F, E]  {
   def reader[A](f: E => A): F[A] = applicative.map(ask)(f)
 }
 
-object ApplicativeAsk {
+class TransApplicativeAsk[F[_]: Monad: ApplicativeAsk[?[_], S], S, T[_[_], _]: MonadTrans](implicit
+  val applicative: Applicative[T[F, ?]]
+) extends DefaultApplicativeAsk[T[F, ?], S] {
+  def ask: T[F, S]  = MonadTrans[T].liftM(ApplicativeAsk[F, S].ask)
+}
+
+
+object ApplicativeAsk extends ApplicativeAsk0 {
   def apply[F[_], E](implicit ev: ApplicativeAsk[F, E]): ApplicativeAsk[F, E] = ev
 
   def ask[F[_], E](implicit ev: ApplicativeAsk[F, E]): F[E] = ev.ask
@@ -26,4 +33,11 @@ object ApplicativeAsk {
     val applicative: Applicative[F] = Applicative[F]
     def ask: F[E] = applicative.point(e)
   }
+}
+
+
+trait ApplicativeAsk0 {
+  implicit def eitherTApplicativeAsk[F[_]: Monad: ApplicativeAsk[?[_], S], S, E]
+    : ApplicativeAsk[EitherT[F, E, ?], S] =
+    new TransApplicativeAsk[F, S, EitherT[?[_], E, ?]]
 }
