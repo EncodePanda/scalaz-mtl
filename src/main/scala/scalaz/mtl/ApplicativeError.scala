@@ -1,7 +1,7 @@
 package scalaz
 package mtl
 
-import scalaz._
+import scalaz._, Scalaz._
 
 trait ApplicativeError[F[_], E] {
 
@@ -21,6 +21,20 @@ trait ApplicativeError[F[_], E] {
     either.fold(raiseError, applicative.point(_))
 }
 
-object ApplicativeError {
+object ApplicativeError extends ApplicativeError0 {
   def apply[F[_], E](implicit ev: ApplicativeError[F, E]): ApplicativeError[F, E] = ev
+}
+
+trait ApplicativeError0 {
+  implicit def eitherTApplicativeError[F[_]:Monad, E]: ApplicativeError[EitherT[F, E, ?], E] =
+    new ApplicativeError[EitherT[F, E, ?], E]  {
+      val applicative: Applicative[EitherT[F, E, ?]] = Applicative[EitherT[F, E, ?]]
+      def raiseError[A](e: E): EitherT[F, E, A] = EitherT(Monad[F].point(-\/(e)))
+      def handleErrorWith[A](fa: EitherT[F, E, A])(f: E => EitherT[F, E, A]): EitherT[F, E, A] =
+        EitherT(Monad[F].bind(fa.run) {
+          case -\/(e) => f(e).run
+          case r => Monad[F].point(r)
+        })
+    }
+
 }
