@@ -25,7 +25,7 @@ object ApplicativeError extends ApplicativeError0 {
   def apply[F[_], E](implicit ev: ApplicativeError[F, E]): ApplicativeError[F, E] = ev
 }
 
-trait ApplicativeError0 {
+trait ApplicativeError0 extends ApplicativeError1 {
   implicit def eitherTApplicativeError[F[_]:Monad, E]: ApplicativeError[EitherT[F, E, ?], E] =
     new ApplicativeError[EitherT[F, E, ?], E]  {
       val applicative: Applicative[EitherT[F, E, ?]] = Applicative[EitherT[F, E, ?]]
@@ -37,4 +37,14 @@ trait ApplicativeError0 {
         })
     }
 
+}
+
+trait ApplicativeError1 {
+  implicit def stateTApplicativeError[F[_]:Monad: ApplicativeError[?[_], E],S, E]: ApplicativeError[StateT[F, S, ?], E] =
+    new ApplicativeError[StateT[F, S, ?], E]  {
+      val applicative: Applicative[StateT[F, S, ?]] = Applicative[StateT[F, S, ?]]
+      def raiseError[A](e: E): StateT[F, S, A] =
+        StateT(s => ApplicativeError[F, E].raiseError(e).map((a:A) => (s, a)))
+      def handleErrorWith[A](fa: StateT[F, S, A])(f: E => StateT[F, S, A]): StateT[F, S, A] = ???
+    }
 }
