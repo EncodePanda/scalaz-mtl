@@ -41,8 +41,17 @@ trait ApplicativeAsk0 extends ApplicativeAsk1 {
     new TransApplicativeAsk[F, S, EitherT[?[_], E, ?]]
 }
 
-trait ApplicativeAsk1 {
+trait ApplicativeAsk1 extends ApplicativeAsk2 {
   implicit def stateTApplicativeAsk[F[_]: Monad: ApplicativeAsk[?[_], S], S, E]
     : ApplicativeAsk[StateT[F, E, ?], S] =
     new TransApplicativeAsk[F, S, StateT[?[_], E, ?]]
+}
+
+trait ApplicativeAsk2 {
+  implicit def readerTApplicativeAsk[F[_]: Monad, E]
+      : ApplicativeAsk[ReaderT[F, E, ?], E] =
+    new DefaultApplicativeAsk[ReaderT[F, E, ?], E]  {
+        val applicative: Applicative[ReaderT[F, E, ?]] = Applicative[ReaderT[F, E, ?]]
+        def ask: ReaderT[F, E, E] = Kleisli.ask[F, E]
+    }
 }
