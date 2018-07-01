@@ -35,9 +35,14 @@ object ApplicativeAsk extends ApplicativeAsk0 {
   }
 }
 
-
-trait ApplicativeAsk0 {
+trait ApplicativeAsk0 extends ApplicativeAsk1 {
   implicit def eitherTApplicativeAsk[F[_]: Monad: ApplicativeAsk[?[_], S], S, E]
     : ApplicativeAsk[EitherT[F, E, ?], S] =
     new TransApplicativeAsk[F, S, EitherT[?[_], E, ?]]
+}
+
+trait ApplicativeAsk1 {
+  implicit def stateTApplicativeAsk[F[_]: Monad: ApplicativeAsk[?[_], S], S, E]
+    : ApplicativeAsk[StateT[F, E, ?], S] =
+    new TransApplicativeAsk[F, S, StateT[?[_], E, ?]]
 }
