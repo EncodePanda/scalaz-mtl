@@ -39,7 +39,7 @@ trait ApplicativeError0 extends ApplicativeError1 {
 
 }
 
-trait ApplicativeError1 {
+trait ApplicativeError1 extends ApplicativeError2 {
   implicit def stateTApplicativeError[F[_]:Monad: ApplicativeError[?[_], E],S, E]: ApplicativeError[StateT[F, S, ?], E] =
     new ApplicativeError[StateT[F, S, ?], E]  {
       val applicative: Applicative[StateT[F, S, ?]] = Applicative[StateT[F, S, ?]]
@@ -47,4 +47,16 @@ trait ApplicativeError1 {
         StateT(s => ApplicativeError[F, E].raiseError(e).map((a:A) => (s, a)))
       def handleErrorWith[A](fa: StateT[F, S, A])(f: E => StateT[F, S, A]): StateT[F, S, A] = ???
     }
+}
+
+trait ApplicativeError2 {
+  implicit def readerTApplicativeError[F[_]:Monad: ApplicativeError[?[_], E],Env, E]: ApplicativeError[ReaderT[F, Env, ?], E] =
+    new ApplicativeError[ReaderT[F, Env, ?], E]  {
+      val applicative: Applicative[ReaderT[F, Env, ?]] = Applicative[ReaderT[F, Env, ?]]
+      def raiseError[A](e: E): ReaderT[F, Env, A] =
+        ReaderT(s => ApplicativeError[F, E].raiseError(e))
+      def handleErrorWith[A](fa: ReaderT[F, Env, A])(f: E => ReaderT[F, Env, A]): ReaderT[F, Env, A] = ???
+    }
+
+
 }
